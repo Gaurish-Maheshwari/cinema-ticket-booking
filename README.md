@@ -86,6 +86,4 @@ go test ./internal/booking -run TestConcurrentBooking -v -count=1
 The test fires 100k concurrent bookings at one seat and asserts exactly one succeeds.
 
 ## Notes
-
-- `memory_store.go` and `concurrent_store.go` are earlier in-memory versions and are not used by the app.
 - The Redis address (`localhost:6379`) is hardcoded in `cmd/main.go`.
