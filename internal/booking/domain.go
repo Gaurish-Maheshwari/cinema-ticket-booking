@@ -8,7 +8,9 @@ import (
 
 var (
 	ErrSeatAlreadyBooked = errors.New("seat is already taken")
+	ErrNotSessionOwner   = errors.New("session does not belong to this user")
 )
+
 
 // Booking represents a confirmed seat reservation.
 type Booking struct {
@@ -26,4 +28,6 @@ type BookingStore interface {
 
 	Confirm(ctx context.Context, sessionID string, userID string) (Booking, error)
 	Release(ctx context.Context, sessionID string, userID string) error
+
+	
 }

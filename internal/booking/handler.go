@@ -2,11 +2,12 @@ package booking
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/sikozonpc/cinema/internal/utils"
+	"github.com/Gaurish_Maheshwari/cinema-ticket-booking/internal/utils"
 )
 
 type handler struct {
@@ -26,8 +27,8 @@ func (h *handler) HoldSeat(w http.ResponseWriter, r *http.Request) {
 	seatID := r.PathValue("seatID")
 
 	var req holdSeatRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Println(err)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.UserID == "" {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
@@ -39,7 +40,12 @@ func (h *handler) HoldSeat(w http.ResponseWriter, r *http.Request) {
 
 	session, err := h.svc.Book(data)
 	if err != nil {
+		if errors.Is(err, ErrSeatAlreadyBooked) {
+			http.Error(w, err.Error(), http.StatusConflict)
+			return
+		}
 		log.Println(err)
+		http.Error(w, "could not hold seat", http.StatusInternalServerError)
 		return
 	}
 
@@ -87,16 +93,14 @@ func (h *handler) ConfirmSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.PathValue("sessionID")
 
 	var req holdSeatRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return
-	}
-
-	if req.UserID == "" {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.UserID == "" {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	session, err := h.svc.ConfirmSeat(r.Context(), sessionID, req.UserID)
 	if err != nil {
+		writeSessionError(w, err)
 		return
 	}
 
@@ -122,19 +126,24 @@ func (h *handler) ReleaseSession(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.PathValue("sessionID")
 
 	var req holdSeatRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Println(err)
-		return
-	}
-	if req.UserID == "" {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.UserID == "" {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	err := h.svc.ReleaseSeat(r.Context(), sessionID, req.UserID)
-	if err != nil {
-		log.Println(err)
+	if err := h.svc.ReleaseSeat(r.Context(), sessionID, req.UserID); err != nil {
+		writeSessionError(w, err)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func writeSessionError(w http.ResponseWriter, err error) {
+	if errors.Is(err, ErrNotSessionOwner) {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+	log.Println(err)
+	http.Error(w, "session not found or expired", http.StatusNotFound)
 }

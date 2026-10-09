@@ -149,6 +149,9 @@ func (s *RedisStore) getSession(ctx context.Context, sessionID string, userID st
 	if err != nil {
 		return Booking{}, "", err
 	}
+	if session.UserID != userID {
+		return Booking{}, "", ErrNotSessionOwner
+	}
 
 	return session, sk, nil
 }

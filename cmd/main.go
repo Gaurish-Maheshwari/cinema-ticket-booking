@@ -4,10 +4,12 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/sikozonpc/cinema/internal/adapters/redis"
-	"github.com/sikozonpc/cinema/internal/booking"
-	"github.com/sikozonpc/cinema/internal/utils"
+	"github.com/Gaurish_Maheshwari/cinema-ticket-booking/internal/adapters/redis"
+	"github.com/Gaurish_Maheshwari/cinema-ticket-booking/internal/booking"
+	"github.com/Gaurish_Maheshwari/cinema-ticket-booking/internal/utils"
 )
+
+
 
 func main() {
 	mux := http.NewServeMux()
